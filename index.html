@@ -238,6 +238,74 @@
             min-width: 600px;
         }
         
+        /* Hide table on mobile, show cards instead */
+        @media (max-width: 767px) {
+            table {
+                display: none;
+            }
+        }
+        
+        /* Card view for mobile */
+        .books-cards {
+            display: none;
+        }
+        
+        @media (max-width: 767px) {
+            .books-cards {
+                display: block;
+            }
+        }
+        
+        .book-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .book-card-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+        
+        .book-card-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .book-card-row:last-of-type {
+            border-bottom: none;
+        }
+        
+        .book-card-label {
+            font-weight: 600;
+            color: #666;
+            width: 100px;
+            flex-shrink: 0;
+        }
+        
+        .book-card-value {
+            color: #333;
+            flex: 1;
+        }
+        
+        .book-card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .book-card-actions .btn {
+            flex: 1;
+        }
+        
         th, td {
             padding: 10px;
             text-align: left;
@@ -554,6 +622,9 @@
                     </tr>
                 </tbody>
             </table>
+            
+            <!-- Mobile Card View -->
+            <div id="booksCards" class="books-cards"></div>
         </div>
     </div>
     
@@ -580,6 +651,7 @@
 
         const form = document.getElementById('bookForm');
         const tableBody = document.getElementById('bookTableBody');
+        const booksCards = document.getElementById('booksCards');
         const searchAll = document.getElementById('searchAll');
         const filterGenre = document.getElementById('filterGenre');
         const filterShelf = document.getElementById('filterShelf');
@@ -706,11 +778,13 @@
             
             if (filteredBooks.length === 0) {
                 tableBody.innerHTML = '<tr class="empty-state"><td colspan="6">No books found matching your criteria.</td></tr>';
+                booksCards.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No books found matching your criteria.</div>';
                 return;
             }
             
             // Clear existing content first
             tableBody.innerHTML = '';
+            booksCards.innerHTML = '';
             
             // Build table content
             const rows = filteredBooks.map((book, index) => `
@@ -731,9 +805,44 @@
             
             tableBody.innerHTML = rows;
             
+            // Build card content for mobile
+            const cards = filteredBooks.map(book => `
+                <div class="book-card" data-book-id="${book.id}">
+                    <div class="book-card-title">${book.name}</div>
+                    <div class="book-card-row">
+                        <div class="book-card-label">Author:</div>
+                        <div class="book-card-value">${book.author}</div>
+                    </div>
+                    ${book.genre ? `
+                    <div class="book-card-row">
+                        <div class="book-card-label">Genre:</div>
+                        <div class="book-card-value">${book.genre}</div>
+                    </div>
+                    ` : ''}
+                    ${book.shelf ? `
+                    <div class="book-card-row">
+                        <div class="book-card-label">Bookshelf:</div>
+                        <div class="book-card-value">${book.shelf}</div>
+                    </div>
+                    ` : ''}
+                    ${book.date ? `
+                    <div class="book-card-row">
+                        <div class="book-card-label">Purchase:</div>
+                        <div class="book-card-value">${book.date}</div>
+                    </div>
+                    ` : ''}
+                    <div class="book-card-actions">
+                        <button class="btn btn-warning" data-action="edit" data-id="${book.id}">Edit</button>
+                        <button class="btn btn-danger" data-action="delete" data-id="${book.id}">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            booksCards.innerHTML = cards;
+            
             console.log('Table rendered with', filteredBooks.length, 'books');
             
-            // Attach event listeners to buttons
+            // Attach event listeners to buttons (both table and cards)
             document.querySelectorAll('[data-action="edit"]').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
